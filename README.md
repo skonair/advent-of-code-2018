@@ -1,14 +1,14 @@
 # advent-of-code-2018
 
-A Clojure library designed to ... well, that part is up to you.
+Some small clojure files that solve the https://adventofcode.com/2018 development tasks.
 
 ## Usage
 
-FIXME
+  $ lein test
 
 ## License
 
-Copyright © 2018 FIXME
+Copyright © 2018 Sascha Koch
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
