@@ -6,7 +6,7 @@
 (defn first-reach [ns]
   (loop [as (cycle ns)
          s 0
-         akk (sorted-set)]
+         akk (hash-set)]
     (if (contains? akk s) 
       s
       (recur (rest as) (+ s (first as)) (conj akk s)))))
