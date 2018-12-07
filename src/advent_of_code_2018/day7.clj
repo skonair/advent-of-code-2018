@@ -59,6 +59,6 @@
           (comment println "Avails is " avails)
           (recur newakk new-in-work (inc t) (- fw (count additional-in-work)))))))
 
-(println "Day 2, Part 1: " (order-instructions))
-(println "Day 2, Part 2: " (order-instructions2 5))
+(println "Day 7, Part 1: " (order-instructions))
+(println "Day 7, Part 2: " (order-instructions2 5))
 
