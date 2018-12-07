@@ -1,11 +1,15 @@
 (ns advent-of-code-2018.day6)
 
 (defn min-max-xy [cs]
-  (comment println "min-max-xy " cs)
   { :minx (apply min (map :x cs))
     :miny (apply min (map :y cs))
     :maxx (apply max (map :x cs))
     :maxy (apply max (map :y cs))})
+
+(defn in-bounding-box [bb]
+  (for [x (range (:minx bb) (int (:maxx bb))) 
+        y (range (:miny bb) (inc (:maxy bb)))] 
+    {:x x :y y}))
 
 (defn abs [n]
   (if (neg? n) (- n) n))
@@ -21,24 +25,9 @@
       nil
       (first nl))))
 
-(defn belongs? [p c cs]
-  (= c (nearest p cs)))
-
 (defn areas-of [cs]
-  (let [bb2 (min-max-xy cs)
-        bb {:minx 0 :maxx 400 :miny 0 :maxy 400}]
-    (map #(nearest % cs) (for [x (range (:minx bb) (int (:maxx bb))) y (range (:miny bb) (inc (:maxy bb)))] {:x x :y y}))))
-
-(defn area-of [c cs]
   (let [bb (min-max-xy cs)]
-    (filter #(belongs? % c cs) (for [x (range (:minx bb) (:maxx bb)) y (range (:miny bb) (:maxy bb))] {:x x :y y}))))
-
-(defn outside? [c mm]
-  (or
-    (= (:x c) (:minx mm))
-    (= (:y c) (:miny mm))
-    (= (:x c) (:maxx mm))
-    (= (:y c) (:maxy mm))))
+    (map #(nearest % cs) (in-bounding-box bb))))
 
 (defn outsides [cs]
   (let [mm (min-max-xy cs)]
@@ -55,6 +44,14 @@
         os (outsides cs)]
     (sort-by second (frequencies (filter #(not (.contains os %)) areas))))) 
 
+(defn total-distances [c cs]
+  (apply + (map #(distance c %) cs)))
+
+(defn safe-coords [cs d]
+  (let [bb (min-max-xy cs)]
+    (count 
+      (filter #(< (total-distances % cs) d) (in-bounding-box bb)))))
+
 (defn parse-line [line]
   (let [[s x y] (re-find #"(\d*),.(\d*)" line)]
         {:x (Integer/parseInt x) 
@@ -65,8 +62,6 @@
 
 (comment def slurp-list (list {:x 1, :y 1} {:x 1, :y 6} {:x 8, :y 3} {:x 3, :y 4} {:x 5, :y 5} {:x 8, :y 9}))
 
-(println "Outsides: " (outsides slurp-list))
-
-(println "Day 6, Part 1: " (area-sizes slurp-list)) 
-(println "Day 6, Part 2: " )
+(println "Day 6, Part 1: " (second (first (reverse (area-sizes slurp-list)))))
+(println "Day 6, Part 2: " (safe-coords slurp-list 10000))
 
