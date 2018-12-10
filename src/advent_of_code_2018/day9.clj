@@ -1,41 +1,75 @@
-(ns advent-of-code-2018.day9)
+(ns advent-of-code-2018.day9
+  (:require [clojure.string :as str]))
 
-(defn insert-vec [v e p]
-  (apply conj (take-last (- (count v) p) v) e (reverse (take p v))))
+;; implementation via zipper (G. Huet)
 
-(defn game [players last-marble]
-  (loop [marble 1
-         player 0
-         marbles [0]
-         pos 0
-         scores  (apply merge (for [p (range players)] {p 0}))]
-    (comment println "Marbles[" player "] with pos(" pos ") = " marbles)
-    (if (> marble last-marble)
-      scores
-      (let [special? (zero? (mod marble 23))
-            next-pos (if special? (mod (- pos 7) (count marbles)) (mod (+ pos 2) (count marbles)))
-            next-marbles (if special? (remove #{(nth marbles (inc next-pos))} marbles) (insert-vec marbles marble (inc next-pos)))
-            next-scores (if special? (assoc scores player (+ marble (nth marbles (inc next-pos)) (get scores player))) scores)
-            ]
-      (recur 
-        (inc marble)
-        (mod (inc player) players)
-        next-marbles
-        next-pos
-        next-scores)))))
-        
+;; [] 1 [2 3 4]  --> prev [3 2 1]  4 []
+;;
+;; [1] 2 [3 4] --> prev [] 1 [2 3 4]
+;;
+(defn prv [z]
+  (let [[l c r] z]
+    (if (empty? l) 
+      (let [rr (reverse (conj r c))]
+        [(rest rr) (first rr) '()])
+      [(rest l) (first l) (conj r c)])))
 
-(def slurp-list 
-  (clojure.string/split-lines (slurp "resources/day9.txt")))
+;; [3 2 1] 4 [] --> next
+;; [] 1 [2 3 4]
+;;
+;; [2 1] 3 [4] --> next
+;; [3 2 1] 4 []
+;;
+(defn nxt [z]
+  (let [[l c r] z]
+    (if (empty? r)
+      (let [rl (reverse (conj l c))]
+        ['() (first rl) (rest rl)])
+      [(conj l c) (first r) (rest r)])))
 
-(def result (game 9 25))
-(def result (game 10 1618))
-(def result (game 13 7999))
-(def result (game 17 1104))
-(def result (game 21 6111))
-(def result (game 30 5807))
-(def result (game 491 71058))
+(defn rot [z n]
+  (cond
+    (zero? n) z
+    (< n 0) (rot (prv z) (inc n))
+    (> n 0) (rot (nxt z) (dec n))))
 
-(println "Day 9, Part 1: "(second (first (reverse (sort-by val result)))))
-(println "Day 9, Part 2: " )
+(defn ins [z v]
+  (let [[l c r] z]
+    [l v (conj r c)]))
+
+(defn rmv [z]
+  (let [[l c r] z]
+    (if (empty? r)
+      [c [(rest l) (first l) r]]
+      [c [l (first r) (rest r)]])))
+
+(defn prt [z]
+  (let [[l c r] z]
+    (str (str/join " " (reverse l)) " *" c "* " (str/join " " r))))
+
+(defn nxt-zip [z c special?]
+  (if special? 
+    (let [[c nz] (rmv (rot z -7))]
+      [nz c])
+    [(ins (rot z 2) c) 0]))
+
+(defn game [ps lm]
+  (loop [m 1
+         p 0
+         z ['() 0 '()]
+         ss  (apply merge (for [pl (range ps)] {pl 0}))]
+    (if (> m lm)
+      (second (first (reverse (sort-by val ss))))
+      (let [special? (zero? (mod m 23))
+            [nz c] (nxt-zip z m special?) 
+            nss (if special? (assoc ss p (+ m c (get ss p))) ss)]
+      (recur (inc m) (mod (inc p) ps) nz nss)))))
+
+(def slurp-list (str/split-lines (slurp "resources/day9.txt")))
+
+(time (def result (game 491 71058)))
+(println "Day 9, Part 1: " result)
+
+(time (def result (game 491 7105800)))
+(println "Day 9, Part 2: " result)
 
